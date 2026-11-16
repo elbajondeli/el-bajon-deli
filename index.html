@@ -566,17 +566,19 @@ async function submitOrder(e) {
 
   const envio = shippingFor(localidad) ?? 0;
   const pedido = {
-    cliente_nombre: nombre,
-    cliente_telefono: tel,
-    localidad,
-    direccion: dir,
-    forma_pago: pago,
-    indicaciones: $("#notes").value.trim(),
-    productos: lines.map(({ p, q }) => ({ id: p.id, nombre: p.name, precio: p.price, cantidad: q })),
-    costo_envio: envio,
-    total: sub + envio,
-    estado: "pendiente"
-  };
+  customer_name: nombre,
+  phone: tel,
+  address: `${localidad} - ${dir}`,
+  notes: `${$("#notes").value.trim()} | Pago: ${pago} | Envío: ${envio} | Total: ${sub + envio}`,
+  items: lines.map(({ p, q }) => ({
+    id: p.id,
+    nombre: p.name,
+    precio: p.price,
+    cantidad: q
+  })),
+  status: "pendiente"
+};
+
 
   const btn = $("#submitBtn");
   btn.disabled = true;
@@ -584,7 +586,7 @@ async function submitOrder(e) {
 
   try {
     if (!supabaseClient) throw new Error("Sin conexión con el servidor de pedidos");
-    const { error } = await supabaseClient.from("pedidos").insert(pedido);
+  const { error } = await supabaseClient.from("orders").insert(pedido);
     if (error) throw error;
 
     $("#confTitle").textContent = CONFIG.MODO_DEMO ? "¡Pedido registrado para prueba!" : "¡Pedido recibido!";
