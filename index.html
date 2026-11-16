@@ -593,7 +593,7 @@ status: "nuevo"
     $("#confirmtext").textContent = CONFIG.MODO_DEMO
       ? `¡Gracias, ${nombre}! Tu pedido quedó registrado para prueba.`
       : `¡Gracias, ${nombre}! Te vamos a contactar al ${tel} para confirmar tu pedido.${wa ? " Para confirmarlo más rápido, envianos el pedido por WhatsApp con el botón de abajo." : ""}`;
-    $("#summary").textContent = `Subtotal: ${money(sub)} · Envío: ${money(envio)} · Total: ${money(pedido.total)} · Estado: pendiente`;
+   $("#summary").textContent = `Subtotal: ${money(sub)} · Envío: ${money(envio)} · Total: ${money(sub + envio)} · Estado: pendiente`;
     $("#confNote").textContent = CONFIG.MODO_DEMO ? "Pedido registrado para prueba. No confirma una compra real ni habilita una entrega." : "";
 
     const waBtn = $("#waBtn");
