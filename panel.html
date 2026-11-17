@@ -482,7 +482,7 @@ async function changeStatus(id, status) {
   const estado = statusValues[status];
 
   const { error } = await supabaseClient
-    .from("pedidos")
+   .from("orders")
     .update({ estado })
     .eq("id", id);
 
