@@ -110,14 +110,28 @@ button,input,select{font:inherit}button{cursor:pointer;border:1px solid #3a3a3a;
 <div class="stat"><small>En preparación</small><strong id="prepCount">1</strong></div>
 <div class="stat"><small>Ventas de ejemplo</small><strong id="sales">$ 28.400</strong></div>
 </section>
-<div class="toolbar"><input id="search" placeholder="Buscar pedido o cliente…" aria-label="Buscar pedido o cliente"><select id="filter" aria-label="Filtrar por estado"><option value="all">Todos los estados</option><option value="Pendiente">Pendiente</option><option value="Confirmado">Confirmado</option>
-<option value="En preparación">En preparación</option></select><button id="reset">Restaurar ejemplos</button></div>
+
+<div class="toolbar">
+  <input id="search" placeholder="Buscar pedido o cliente…" aria-label="Buscar pedido o cliente">
+  <select id="filter" aria-label="Filtrar por estado">
+    <option value="all">Todos los estados</option>
+    <option value="Pendiente">Pendiente</option>
+    <option value="Confirmado">Confirmado</option>
+    <option value="En preparación">En preparación</option>
+    <option value="Entregado">Entregado</option>
+    <option value="Cancelado">Cancelado</option>
+  </select>
+  <button id="reset">Restaurar ejemplos</button>
+</div>
+
 <section id="orders" class="orders" aria-live="polite"></section>
+
 <div class="note">
   <b style="color:#ff5555">EL BAJÓN DELI · PANEL DE ADMINISTRACIÓN</b>
   <p>Los pedidos se reciben y almacenan en nuestra base de datos. Desde este panel podés consultar la información de cada pedido, actualizar su estado y copiar el resumen para gestionarlo.</p>
-  <p>Los estados disponibles son: Pendiente, Confirmado y En preparación.</p>
+  <p>Los estados disponibles son: Pendiente, Confirmado, En preparación, Entregado y Cancelado.</p>
 </div>
+
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
