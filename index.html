@@ -374,7 +374,10 @@ const CONFIG = {
  SUPABASE_URL: "https://pryrwovkpsrueqlpwunc.supabase.co",
 SUPABASE_KEY: "sb_publishable_R2f6iZJESBEalUttpvu7yw_lWEPG7Ca",
 };
-
+window.supabaseClient = window.supabase.createClient(
+  CONFIG.SUPABASE_URL,
+  CONFIG.SUPABASE_KEY
+);
 /* Productos: [id, nombre, categoría, precio (null = consultar), emoji, descripción, etiqueta]
    OJO: los precios de los combos 1 a 8 son DE EJEMPLO. Cambialos por los reales antes de vender. */
   const products = [
@@ -613,14 +616,13 @@ async function submitOrder(e) {
   btn.textContent = "Enviando…";
 
   try {
-    if (!supabaseClient) {
-      throw new Error("Sin conexión con el servidor de pedidos");
-    }
+   if (!window.supabaseClient) {
+  throw new Error("Sin conexión con el servidor de pedidos");
+}
 
-    const { error } = await supabaseClient
-      .from("orders")
-      .insert(pedido);
-
+const { error } = await window.supabaseClient
+  .from("orders")
+  .insert(pedido);
     if (error) throw error;
 
     $("#confTitle").textContent = "¡Pedido recibido!";
