@@ -162,8 +162,9 @@ function formatTime(date) {
   });
 }
 
+
 function convertOrder(o) {
-  const products = Array.isArray(o.productos) ? o.productos : [];
+  const products = Array.isArray(o.items) ? o.items : [];
 
   const items = products.map(p => [
     `${p.cantidad} × ${p.nombre}`,
@@ -171,21 +172,31 @@ function convertOrder(o) {
   ]);
 
   const subtotal = items.reduce((sum, item) => sum + item[1], 0);
-  const shipping = Number(o.costo_envio || 0);
+
+  const statusMap = {
+    nuevo: "Pendiente",
+    pendiente: "Pendiente",
+    confirmado: "Confirmado",
+    preparando: "En preparación",
+    en_preparacion: "En preparación",
+    en_camino: "En camino",
+    entregado: "Entregado",
+    cancelado: "Cancelado"
+  };
 
   return {
     id: o.id,
-    name: o.cliente_nombre || "Sin nombre",
+    name: o.customer_name || "Sin nombre",
     time: formatTime(o.created_at),
-    phone: o.cliente_telefono || "Sin teléfono",
-    address: [o.localidad, o.direccion].filter(Boolean).join(" · ") || "Sin dirección",
-    payment: o.forma_pago || "No especificado",
-    status: statusLabels[o.estado] || o.estado || "Pendiente",
+    phone: o.phone || "Sin teléfono",
+    address: o.address || "Sin dirección",
+    payment: "No especificado",
+    status: statusMap[o.status] || o.status || "Pendiente",
     items: items,
     subtotal: subtotal,
-    shipping: shipping,
-    total: Number(o.total || 0),
-    notes: o.indicaciones || ""
+    shipping: 0,
+    total: subtotal,
+    notes: o.notes || ""
   };
 }
 
@@ -479,12 +490,11 @@ function render() {
 }
 
 async function changeStatus(id, status) {
-  const estado = statusValues[status];
-
-  const { error } = await supabaseClient
-   .from("orders")
-    .update({ estado })
-    .eq("id", id);
+  const statusValues = {
+  "Pendiente": "nuevo",
+  "Confirmado": "confirmado",
+  "En preparación": "en_preparacion"
+};
 
   if (error) {
     console.error(error);
