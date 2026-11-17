@@ -380,7 +380,7 @@ async function loadOrders() {
   root.innerHTML = '<div class="empty">Cargando pedidos...</div>';
 
   const { data, error } = await supabaseClient
-    .from("pedidos")
+   .from("orders")
     .select("*")
     .order("created_at", { ascending: false });
 
