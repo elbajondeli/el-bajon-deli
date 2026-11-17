@@ -489,12 +489,20 @@ function render() {
   `).join("");
 }
 
+
 async function changeStatus(id, status) {
   const statusValues = {
-  "Pendiente": "nuevo",
-  "Confirmado": "confirmado",
-  "En preparación": "en_preparacion"
-};
+    "Pendiente": "nuevo",
+    "Confirmado": "confirmado",
+    "En preparación": "en_preparacion"
+  };
+
+  const estado = statusValues[status];
+
+  const { error } = await supabaseClient
+    .from("orders")
+    .update({ status: estado })
+    .eq("id", id);
 
   if (error) {
     console.error(error);
