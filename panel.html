@@ -493,11 +493,12 @@ function render() {
 
 
 async function changeStatus(id, status) {
-  const statusValues = {
-    "Pendiente": "nuevo",
-    "Confirmado": "confirmado",
-    "En preparación": "en_preparacion"
-  };
+const statusValues = {
+  "Pendiente": "nuevo",
+  "En preparación": "preparando",
+  "Entregado": "entregado",
+  "Cancelado": "cancelado"
+};
 
   const estado = statusValues[status];
 
