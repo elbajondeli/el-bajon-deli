@@ -506,27 +506,42 @@ function render() {
 }
 
 
+
 async function changeStatus(id, status) {
-const statusValues = {
-  "Pendiente": "nuevo",
-  "En preparación": "preparando",
-  "Entregado": "entregado",
-  "Cancelado": "cancelado"
-};
+  const statusValues = {
+    "Pendiente": "nuevo",
+    "Confirmado": "confirmado",
+    "En preparación": "preparando",
+    "Entregado": "entregado",
+    "Cancelado": "cancelado"
+  };
 
   const estado = statusValues[status];
 
-  const { error } = await supabaseClient
+  if (!estado) {
+    alert("Estado no reconocido.");
+    return;
+  }
+
+  const { data, error } = await supabaseClient
     .from("orders")
     .update({ status: estado })
-    .eq("id", id);
+    .eq("id", id)
+    .select("id, status");
 
-  if (error) {
-    console.error(error);
+  if (error || !data || data.length === 0) {
+    console.error("Error al actualizar:", error);
     alert("No se pudo actualizar el estado.");
     await loadOrders();
     return;
   }
+
+  const order = orders.find(o => String(o.id) === String(id));
+  if (order) order.status = status;
+
+  render();
+}
+
 
   const order = orders.find(o => String(o.id) === String(id));
   if (order) order.status = status;
