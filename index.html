@@ -537,18 +537,20 @@ function updateOrderSummary() {
 }
 
 
+
 function buildWhatsAppText(p, subtotal) {
   const lineas = p.items.map(x =>
     `• ${x.cantidad} x ${x.nombre} - ${money(x.precio * x.cantidad)}`
   ).join("\n");
 
-  const total = subtotal + (shippingFor(p.address.split(" - ")[0]) ?? 0);
+  const envio = shippingFor(p.address.split(" - ")[0]) ?? 0;
+  const total = subtotal + envio;
 
   return `Hola! Hice un pedido en El Bajón Deli:
 ${lineas}
 
 Subtotal: ${money(subtotal)}
-Envío: ${money(total - subtotal)}
+Envío: ${money(envio)}
 Total: ${money(total)}
 
 Nombre: ${p.customer_name}
@@ -557,39 +559,103 @@ Dirección: ${p.address}
 ${p.notes ? "Indicaciones: " + p.notes : ""}`;
 }
 
+async function submitOrder(e) {
+  e.preventDefault();
 
+  const err = $("#formerror");
+  err.textContent = "";
+
+  const { lines, sub } = totals();
+  if (!lines.length) {
+    err.textContent = "Tu carrito está vacío.";
+    return;
+  }
+
+  const nombre = $("#name").value.trim();
+  const tel = $("#phone").value.trim();
+  const localidad = $("#city").value;
+  const pago = $("#payment").value;
+  const dir = $("#address").value.trim();
+
+  if (!nombre || !tel || !localidad || !pago || !dir) {
+    err.textContent = "Completá todos los campos obligatorios.";
+    return;
+  }
+
+  if (!$("#age").checked) {
+    err.textContent = "Tenés que confirmar que sos mayor de 18 años.";
+    return;
+  }
+
+  if (tel.replace(/\D/g, "").length < 8) {
+    err.textContent = "Revisá el teléfono: parece incompleto.";
+    return;
+  }
+
+  const envio = shippingFor(localidad) ?? 0;
+
+  const pedido = {
+    customer_name: nombre,
+    phone: tel,
+    address: `${localidad} - ${dir}`,
+    notes: `${$("#notes").value.trim()} | Pago: ${pago} | Envío: ${envio} | Total: ${sub + envio}`,
+    items: lines.map(({ p, q }) => ({
+      id: p.id,
+      nombre: p.name,
+      precio: p.price,
+      cantidad: q
+    })),
+    status: "nuevo"
+  };
 
   const btn = $("#submitBtn");
   btn.disabled = true;
   btn.textContent = "Enviando…";
 
   try {
-    if (!supabaseClient) throw new Error("Sin conexión con el servidor de pedidos");
-  const { error } = await supabaseClient.from("orders").insert(pedido);
+    if (!supabaseClient) {
+      throw new Error("Sin conexión con el servidor de pedidos");
+    }
+
+    const { error } = await supabaseClient
+      .from("orders")
+      .insert(pedido);
+
     if (error) throw error;
 
-    $("#confTitle").textContent = CONFIG.MODO_DEMO ? "¡Pedido registrado para prueba!" : "¡Pedido recibido!";
-    $("#confirmtext").textContent = CONFIG.MODO_DEMO
-      ? `¡Gracias, ${nombre}! Tu pedido quedó registrado para prueba.`
-      : `¡Gracias, ${nombre}! Te vamos a contactar al ${tel} para confirmar tu pedido.${wa ? " Para confirmarlo más rápido, envianos el pedido por WhatsApp con el botón de abajo." : ""}`;
-   $("#summary").textContent = `Subtotal: ${money(sub)} · Envío: ${money(envio)} · Total: ${money(sub + envio)} · Estado: pendiente`;
-    $("#confNote").textContent = CONFIG.MODO_DEMO ? "Pedido registrado para prueba. No confirma una compra real ni habilita una entrega." : "";
+    $("#confTitle").textContent = "¡Pedido recibido!";
+    $("#confirmtext").textContent =
+      `¡Gracias, ${nombre}! Te vamos a contactar al ${tel} para confirmar tu pedido.`;
+
+    $("#summary").textContent =
+      `Subtotal: ${money(sub)} · Envío: ${money(envio)} · Total: ${money(sub + envio)} · Estado: pendiente`;
+
+    $("#confNote").textContent = "";
 
     const waBtn = $("#waBtn");
-    if (wa) { waBtn.href = waLink(buildWhatsAppText(pedido, sub)); waBtn.hidden = false; } else { waBtn.hidden = true; }
+    if (wa) {
+      waBtn.href = waLink(buildWhatsAppText(pedido, sub));
+      waBtn.hidden = false;
+    } else {
+      waBtn.hidden = true;
+    }
 
     $("#formwrap").style.display = "none";
     $("#confirmation").classList.add("show");
+
     cart = {};
     renderCart();
+
   } catch (error) {
     console.error("Error al guardar el pedido:", error);
-    err.textContent = "No pudimos registrar tu pedido. Probá de nuevo en un momento" + (wa ? " o escribinos por WhatsApp." : ".");
+    err.textContent =
+      "No pudimos registrar tu pedido. Probá de nuevo en un momento.";
   } finally {
     btn.disabled = false;
     btn.textContent = "Confirmar pedido";
   }
 }
+
 
 function resetAfterOrder() {
   closePanel($("#modal"));
