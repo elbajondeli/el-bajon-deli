@@ -189,6 +189,7 @@ function convertOrder(o) {
   };
 }
 
+
 function showLogin() {
   const overlay = document.createElement("div");
   overlay.id = "adminLogin";
@@ -198,55 +199,161 @@ function showLogin() {
     padding:20px; font-family:Arial,sans-serif;
   `;
 
-  overlay.innerHTML = `
-    <form id="loginForm" style="
-      width:100%; max-width:380px; box-sizing:border-box;
-      background:#171717; border:1px solid #333;
-      border-radius:16px; padding:28px; color:white;
-    ">
-      <h2 style="margin-top:0">EL BAJÓN DELI</h2>
-      <p style="color:#aaa">Acceso privado al panel de pedidos</p>
-      <label style="display:block;margin:18px 0 7px">Correo electrónico</label>
-      <input id="adminEmail" type="email" required
-        style="width:100%;box-sizing:border-box;padding:13px;border-radius:8px;border:1px solid #444;background:#222;color:white">
-      <label style="display:block;margin:18px 0 7px">Contraseña</label>
-      <input id="adminPassword" type="password" required
-        style="width:100%;box-sizing:border-box;padding:13px;border-radius:8px;border:1px solid #444;background:#222;color:white">
-      <button type="submit" style="
-        width:100%;margin-top:22px;padding:14px;border:0;
-        border-radius:8px;background:#e32636;color:white;
-        font-weight:bold;cursor:pointer
-      ">Ingresar</button>
-      <p id="loginError" style="color:#ff7777;font-size:13px"></p>
-    </form>
-  `;
-
   document.body.appendChild(overlay);
 
-  document.getElementById("loginForm").addEventListener("submit", async e => {
-    e.preventDefault();
+  function renderLogin() {
+    overlay.innerHTML = `
+      <form id="loginForm" style="
+        width:100%;max-width:380px;box-sizing:border-box;
+        background:#171717;border:1px solid #333;
+        border-radius:16px;padding:28px;color:white;
+      ">
+        <h2>EL BAJÓN DELI</h2>
+        <p style="color:#aaa">Acceso privado al panel de pedidos</p>
 
-    const email = document.getElementById("adminEmail").value.trim();
-    const password = document.getElementById("adminPassword").value;
-    const errorBox = document.getElementById("loginError");
+        <label>Correo electrónico</label>
+        <input id="adminEmail" type="email" required
+          style="width:100%;box-sizing:border-box;padding:13px;
+          margin:8px 0;border-radius:8px;background:#222;
+          color:white;border:1px solid #444">
 
-    errorBox.textContent = "Ingresando...";
+        <label>Contraseña</label>
+        <input id="adminPassword" type="password" required
+          style="width:100%;box-sizing:border-box;padding:13px;
+          margin:8px 0;border-radius:8px;background:#222;
+          color:white;border:1px solid #444">
 
-    const { error } = await supabaseClient.auth.signInWithPassword({
-      email,
-      password
+        <button type="submit" style="
+          width:100%;margin-top:18px;padding:14px;
+          border:0;border-radius:8px;background:#e32636;
+          color:white;font-weight:bold;cursor:pointer
+        ">Ingresar</button>
+
+        <button type="button" id="forgotPassword" style="
+          width:100%;margin-top:14px;padding:10px;
+          background:transparent;color:#ddd;border:0;
+          cursor:pointer
+        ">Olvidé mi contraseña</button>
+
+        <p id="loginError" style="color:#ff7777;font-size:13px"></p>
+      </form>
+    `;
+
+    document.getElementById("loginForm").addEventListener("submit", async e => {
+      e.preventDefault();
+
+      const email = document.getElementById("adminEmail").value.trim();
+      const password = document.getElementById("adminPassword").value;
+      const errorBox = document.getElementById("loginError");
+
+      errorBox.textContent = "Ingresando...";
+
+      const { error } = await supabaseClient.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        errorBox.textContent = "No se pudo ingresar. Revisá el correo y la contraseña.";
+        return;
+      }
+
+      overlay.remove();
+      addLogoutButton();
+      await loadOrders();
     });
 
-    if (error) {
-      errorBox.textContent = "No se pudo ingresar. Revisá el correo y la contraseña.";
-      return;
-    }
+    document.getElementById("forgotPassword").addEventListener("click", async () => {
+      const email = document.getElementById("adminEmail").value.trim();
+      const errorBox = document.getElementById("loginError");
 
-    overlay.remove();
-    addLogoutButton();
-    await loadOrders();
+      if (!email) {
+        errorBox.textContent = "Primero escribí tu correo electrónico.";
+        return;
+      }
+
+      errorBox.textContent = "Enviando correo de recuperación...";
+
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + window.location.pathname
+      });
+
+      errorBox.textContent = error
+        ? "No se pudo enviar el correo: " + error.message
+        : "¡Correo enviado! Revisá tu bandeja de entrada.";
+    });
+  }
+
+  function renderPasswordForm() {
+    overlay.innerHTML = `
+      <form id="newPasswordForm" style="
+        width:100%;max-width:380px;box-sizing:border-box;
+        background:#171717;border:1px solid #333;
+        border-radius:16px;padding:28px;color:white;
+      ">
+        <h2>EL BAJÓN DELI</h2>
+        <p style="color:#aaa">Crear nueva contraseña</p>
+
+        <input id="newPassword" type="password" required
+          minlength="6" placeholder="Nueva contraseña"
+          style="width:100%;box-sizing:border-box;padding:13px;
+          margin:12px 0;background:#222;color:white;
+          border:1px solid #444;border-radius:8px">
+
+        <button type="submit" style="
+          width:100%;padding:14px;background:#e32636;
+          color:white;border:0;border-radius:8px;
+          font-weight:bold;cursor:pointer
+        ">Guardar contraseña</button>
+
+        <p id="passwordError" style="color:#ff7777;font-size:13px"></p>
+      </form>
+    `;
+
+    document.getElementById("newPasswordForm").addEventListener("submit", async e => {
+      e.preventDefault();
+
+      const password = document.getElementById("newPassword").value;
+      const errorBox = document.getElementById("passwordError");
+
+      errorBox.textContent = "Guardando...";
+
+      const { error } = await supabaseClient.auth.updateUser({
+        password
+      });
+
+      if (error) {
+        errorBox.textContent = "Error: " + error.message;
+        return;
+      }
+
+      history.replaceState(null, "", window.location.pathname);
+
+      overlay.remove();
+      addLogoutButton();
+      await loadOrders();
+    });
+  }
+
+  supabaseClient.auth.onAuthStateChange((event) => {
+    if (event === "PASSWORD_RECOVERY") {
+      renderPasswordForm();
+    }
   });
+
+  renderLogin();
+
+  if (new URLSearchParams(window.location.hash.substring(1)).get("type") === "recovery") {
+    supabaseClient.auth.getSession().then(({ data, error }) => {
+      if (data && data.session) {
+        renderPasswordForm();
+      } else if (error) {
+        document.getElementById("loginError").textContent = error.message;
+      }
+    });
+  }
 }
+
 
 function addLogoutButton() {
   if (document.getElementById("adminLogout")) return;
