@@ -542,13 +542,6 @@ async function changeStatus(id, status) {
   render();
 }
 
-
-  const order = orders.find(o => String(o.id) === String(id));
-  if (order) order.status = status;
-
-  render();
-}
-
 function copySummary(id) {
   const o = orders.find(x => String(x.id) === String(id));
   if (!o) return;
